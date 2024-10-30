@@ -177,6 +177,7 @@ VOID_START = re.compile("//|/\\*|\"|'")
 QUOTE_END = re.compile("(?<!\\\\)'")
 DQUOTE_END = re.compile('(?<!\\\\)"')
 
+
 def remove_comments_strings(prg):
     todo = "\n".join(prg)  # normalize line ends
     done = ""
