@@ -178,7 +178,7 @@ QUOTE_END = re.compile("(?<!\\\\)'")
 DQUOTE_END = re.compile('(?<!\\\\)"')
 
 def remove_comments_strings(prg):
-    todo = "\n".join(prg) # normalize line ends
+    todo = "\n".join(prg)  # normalize line ends
     done = ""
     while True:
         m = VOID_START.search(todo)
@@ -186,23 +186,23 @@ def remove_comments_strings(prg):
             done += todo
             break
         else:
-            done += todo[:m.start()]
+            done += todo[: m.start()]
             if m[0] == "//":
-                end = todo.find('\n', m.end())
+                end = todo.find("\n", m.end())
                 todo = "" if end == -1 else todo[end:]
             elif m[0] == "/*":
                 end = todo.find("*/", m.end())
                 done += " "
-                todo = "" if end == -1 else todo[end+2:]
+                todo = "" if end == -1 else todo[end + 2 :]
             else:
                 if m[0] == "'":
-                    m2 = QUOTE_END.search(todo[m.end():])
+                    m2 = QUOTE_END.search(todo[m.end() :])
                 else:
-                    m2 = DQUOTE_END.search(todo[m.end():])
+                    m2 = DQUOTE_END.search(todo[m.end() :])
                 if not m2:
                     # unclosed string
                     break
-                todo = todo[m.end()+m2.end():]
+                todo = todo[m.end() + m2.end() :]
     return done
 
 
