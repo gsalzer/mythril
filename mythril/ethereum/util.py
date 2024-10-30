@@ -168,10 +168,49 @@ except ConnectionError:
     all_versions = solcx.get_installed_solc_versions()
 
 
+# remove_comments_strings(prg):
+# Return Solidity program prg without comments and strings
+# [SmartBugs, https://github.com/smartbugs/smartbugs/blob/master/sb/solidity.py]
+import re
+
+VOID_START = re.compile("//|/\\*|\"|'")
+QUOTE_END = re.compile("(?<!\\\\)'")
+DQUOTE_END = re.compile('(?<!\\\\)"')
+
+def remove_comments_strings(prg):
+    todo = "\n".join(prg) # normalize line ends
+    done = ""
+    while True:
+        m = VOID_START.search(todo)
+        if not m:
+            done += todo
+            break
+        else:
+            done += todo[:m.start()]
+            if m[0] == "//":
+                end = todo.find('\n', m.end())
+                todo = "" if end == -1 else todo[end:]
+            elif m[0] == "/*":
+                end = todo.find("*/", m.end())
+                done += " "
+                todo = "" if end == -1 else todo[end+2:]
+            else:
+                if m[0] == "'":
+                    m2 = QUOTE_END.search(todo[m.end():])
+                else:
+                    m2 = DQUOTE_END.search(todo[m.end():])
+                if not m2:
+                    # unclosed string
+                    break
+                todo = todo[m.end()+m2.end():]
+    return done
+
+
 def extract_version(file: typing.Optional[str]):
     if file is None:
         return None
     version_line = None
+    file = remove_comments_strings(file.split("\n"))
     for line in file.split("\n"):
         if "pragma solidity" not in line:
             continue
