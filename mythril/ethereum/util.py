@@ -168,18 +168,15 @@ except ConnectionError:
     all_versions = solcx.get_installed_solc_versions()
 
 
-# remove_comments_strings(prg):
-# Return Solidity program prg without comments and strings
-# [SmartBugs, https://github.com/smartbugs/smartbugs/blob/master/sb/solidity.py]
+# remove_comments_strings(str):
+# Return str without Solidity comments and strings
 import re
 
 VOID_START = re.compile("//|/\\*|\"|'")
 QUOTE_END = re.compile("(?<!\\\\)'")
 DQUOTE_END = re.compile('(?<!\\\\)"')
 
-
-def remove_comments_strings(prg):
-    todo = "\n".join(prg)  # normalize line ends
+def remove_comments_strings(todo):
     done = ""
     while True:
         m = VOID_START.search(todo)
@@ -211,14 +208,31 @@ def extract_version(file: typing.Optional[str]):
     if file is None:
         return None
     version_line = None
-    file = remove_comments_strings(file.split("\n"))
-    for line in file.split("\n"):
-        if "pragma solidity" not in line:
-            continue
-        version_line = line.rstrip()
-        break
+
+    # normalize line endings
+    if "\n" in file:
+        file = file.replace("\r", "")
+    else:
+        file = file.replace("\r", "\n")
+
+    # extract regular pragma
+    file_wo_comments_strings = remove_comments_strings(file)
+    for line in file_wo_comments_strings.split("\n"):
+        if "pragma solidity" in line:
+            version_line = line
+            break
+
+    # extract pragma from comments
+    if version_line is None:
+        for line in file.split("\n"):
+            if "pragma solidity" in line:
+                version_line = line
+                break
+
     if version_line is None:
         return None
+    else:
+        version_line = version_line.rstrip()
 
     assert "pragma solidity" in version_line
     if version_line[-1] == ";":
