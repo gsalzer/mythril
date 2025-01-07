@@ -232,9 +232,8 @@ def extract_version(file: typing.Optional[str]):
 
     if version_line is None:
         return None
-    else:
-        version_line = version_line.rstrip()
 
+    version_line = version_line.rstrip()
     assert "pragma solidity" in version_line
     if version_line[-1] == ";":
         version_line = version_line[:-1]
