@@ -6,8 +6,8 @@ import json
 import logging
 import os
 import platform
-import typing
 import re
+import typing
 from json.decoder import JSONDecodeError
 from subprocess import PIPE, Popen
 from typing import Tuple
@@ -181,7 +181,6 @@ def remove_comments_strings(program):
     :return: program with strings emptied and comments removed
     :rtype: str
     """
-    
     result = ""
     while True:
         match_start_of_void = VOID_START.search(program)
@@ -199,12 +198,18 @@ def remove_comments_strings(program):
                 program = "" if end == -1 else program[end + 2 :]
             else:
                 if match_start_of_void[0] == "'":
-                    match_end_of_string = QUOTE_END.search(program[match_start_of_void.end() :])
+                    match_end_of_string = QUOTE_END.search(
+                        program[match_start_of_void.end() :]
+                    )
                 else:
-                    match_end_of_string = DQUOTE_END.search(program[match_start_of_void.end() :])
-                if not match_end_of_string: # unclosed string
+                    match_end_of_string = DQUOTE_END.search(
+                        program[match_start_of_void.end() :]
+                    )
+                if not match_end_of_string:  # unclosed string
                     break
-                program = program[match_start_of_void.end() + match_end_of_string.end() :]
+                program = program[
+                    match_start_of_void.end() + match_end_of_string.end() :
+                ]
     return result
 
 
@@ -236,7 +241,6 @@ def extract_version(file: typing.Optional[str]):
     if not version_line:
         return None
     assert "pragma solidity" in version_line
-    
     if version_line[-1] == ";":
         version_line = version_line[:-1]
     version_line = version_line[version_line.find("pragma") :]
