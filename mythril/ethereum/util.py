@@ -213,31 +213,32 @@ def remove_comments_strings(program):
     return result
 
 
-def extract_version_line(file):
+def extract_version_line(program):
+    if not program:
+        return None
+
     # normalize line endings
-    if "\n" in file:
-        file = file.replace("\r", "")
+    if "\n" in program:
+        program = program.replace("\r", "")
     else:
-        file = file.replace("\r", "\n")
+        program = program.replace("\r", "\n")
 
     # extract regular pragma
-    file_wo_comments_strings = remove_comments_strings(file)
-    for line in file_wo_comments_strings.split("\n"):
+    program_wo_comments_strings = remove_comments_strings(program)
+    for line in program_wo_comments_strings.split("\n"):
         if "pragma solidity" in line:
             return line.rstrip()
 
     # extract pragma from comments
-    for line in file.split("\n"):
+    for line in program.split("\n"):
         if "pragma solidity" in line:
             return line.rstrip()
 
     return None
 
 
-def extract_version(file: typing.Optional[str]):
-    if not file:
-        return None
-    version_line = extract_version_line(file)
+def extract_version(program: typing.Optional[str]):
+    version_line = extract_version_line(program)
     if not version_line:
         return None
 
@@ -273,11 +274,11 @@ def extract_version(file: typing.Optional[str]):
 
 
 def extract_binary(file: str) -> Tuple[str, str]:
-    file_data = None
+    program = None
     with open(file) as f:
-        file_data = f.read()
+        program = f.read()
 
-    version = extract_version(file_data)
+    version = extract_version(program)
 
     if version is None:
         return os.environ.get("SOLC") or "solc", version
