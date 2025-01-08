@@ -7,6 +7,7 @@ import logging
 import os
 import platform
 import typing
+import re
 from json.decoder import JSONDecodeError
 from subprocess import PIPE, Popen
 from typing import Tuple
@@ -168,48 +169,46 @@ except ConnectionError:
     all_versions = solcx.get_installed_solc_versions()
 
 
-# remove_comments_strings(str):
-# Return str without Solidity comments and strings
-import re
-
 VOID_START = re.compile("//|/\\*|\"|'")
 QUOTE_END = re.compile("(?<!\\\\)'")
 DQUOTE_END = re.compile('(?<!\\\\)"')
 
 
-def remove_comments_strings(todo):
-    done = ""
+def remove_comments_strings(program):
+    """Return program without Solidity comments and strings
+
+    :param str program: Solidity program with lines separated by \\n
+    :return: program with strings emptied and comments removed
+    :rtype: str
+    """
+    
+    result = ""
     while True:
-        m = VOID_START.search(todo)
-        if not m:
-            done += todo
+        match_start_of_void = VOID_START.search(program)
+        if not match_start_of_void:
+            result += program
             break
         else:
-            done += todo[: m.start()]
-            if m[0] == "//":
-                end = todo.find("\n", m.end())
-                todo = "" if end == -1 else todo[end:]
-            elif m[0] == "/*":
-                end = todo.find("*/", m.end())
-                done += " "
-                todo = "" if end == -1 else todo[end + 2 :]
+            result += program[: match_start_of_void.start()]
+            if match_start_of_void[0] == "//":
+                end = program.find("\n", match_start_of_void.end())
+                program = "" if end == -1 else program[end:]
+            elif match_start_of_void[0] == "/*":
+                end = program.find("*/", match_start_of_void.end())
+                result += " "
+                program = "" if end == -1 else program[end + 2 :]
             else:
-                if m[0] == "'":
-                    m2 = QUOTE_END.search(todo[m.end() :])
+                if match_start_of_void[0] == "'":
+                    match_end_of_string = QUOTE_END.search(program[match_start_of_void.end() :])
                 else:
-                    m2 = DQUOTE_END.search(todo[m.end() :])
-                if not m2:
-                    # unclosed string
+                    match_end_of_string = DQUOTE_END.search(program[match_start_of_void.end() :])
+                if not match_end_of_string: # unclosed string
                     break
-                todo = todo[m.end() + m2.end() :]
-    return done
+                program = program[match_start_of_void.end() + match_end_of_string.end() :]
+    return result
 
 
-def extract_version(file: typing.Optional[str]):
-    if file is None:
-        return None
-    version_line = None
-
+def extract_version_line(file):
     # normalize line endings
     if "\n" in file:
         file = file.replace("\r", "")
@@ -220,21 +219,24 @@ def extract_version(file: typing.Optional[str]):
     file_wo_comments_strings = remove_comments_strings(file)
     for line in file_wo_comments_strings.split("\n"):
         if "pragma solidity" in line:
-            version_line = line
-            break
+            return line.rstrip()
 
     # extract pragma from comments
-    if version_line is None:
-        for line in file.split("\n"):
-            if "pragma solidity" in line:
-                version_line = line
-                break
+    for line in file.split("\n"):
+        if "pragma solidity" in line:
+            return line.rstrip()
 
-    if version_line is None:
+    return None
+
+
+def extract_version(file: typing.Optional[str]):
+    if not file:
         return None
-
-    version_line = version_line.rstrip()
+    version_line = extract_version_line(file)
+    if not version_line:
+        return None
     assert "pragma solidity" in version_line
+    
     if version_line[-1] == ";":
         version_line = version_line[:-1]
     version_line = version_line[version_line.find("pragma") :]
