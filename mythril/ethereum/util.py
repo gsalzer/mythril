@@ -240,6 +240,7 @@ def extract_version(file: typing.Optional[str]):
     version_line = extract_version_line(file)
     if not version_line:
         return None
+
     assert "pragma solidity" in version_line
     if version_line[-1] == ";":
         version_line = version_line[:-1]
