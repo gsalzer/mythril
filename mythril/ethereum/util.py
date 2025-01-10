@@ -174,7 +174,7 @@ QUOTE_END = re.compile("(?<!\\\\)'")
 DQUOTE_END = re.compile('(?<!\\\\)"')
 
 
-def remove_comments_strings(program):
+def remove_comments_strings(program: str) -> str:
     """Return program without Solidity comments and strings
 
     :param str program: Solidity program with lines separated by \\n
@@ -213,7 +213,7 @@ def remove_comments_strings(program):
     return result
 
 
-def extract_version_line(program):
+def extract_version_line(program: typing.Optional[str]) -> typing.Optional[str]:
     if not program:
         return None
 
@@ -237,7 +237,7 @@ def extract_version_line(program):
     return None
 
 
-def extract_version(program: typing.Optional[str]):
+def extract_version(program: typing.Optional[str]) -> typing.Optional[str]:
     version_line = extract_version_line(program)
     if not version_line:
         return None
